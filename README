@@ -2,8 +2,20 @@ NMDCX
 ------
 NMDC is Neo Modus' Direct Connect Protocol. Full protocol at http://nmdc.sourceforge.net.
 
+Usage
+-----
+Create a python file like
+
++------------------------------------------+
+|                                          |
+|  from PlainTalk import *                 |
+|  pt = PlainTalk(HUB, USERNAME, PASSWORD) |
+|  pt.talk()                               |
+|                                          |
++------------------------------------------+
+   
+
 To do
 -----
 (1) Create a daemon that can connect to DC Hubs. This is an intermediary.
 (2) Create a client downloader program, that uses the daemon, searches stuff and downloads based on the IDs (each search result is assigned an ID).
-(3) See the connected users and download their filelists.
