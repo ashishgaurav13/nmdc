@@ -1,4 +1,3 @@
-PORT = 411
 BUFLEN = 4096
 RECV = "R: "
 SENT = "S: "

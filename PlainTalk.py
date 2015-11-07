@@ -4,10 +4,10 @@ from utility import *
 
 class PlainTalk:
 
-  def __init__(self, hub, username, password):
+  def __init__(self, hub, port, username, password):
     # establish connection
     self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.s.connect((hub, PORT))
+    self.s.connect((hub, port))
     self.s.settimeout(2.0)
     self.username = username
     self.password = password
