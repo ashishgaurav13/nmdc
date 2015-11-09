@@ -63,16 +63,22 @@ class PlainUDP(threading.Thread):
         threading.Thread.__init__(self)
         self.ip = ip
         self.port = port
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+
     def run(self):
-        print "Listening on Port"+str(self.ip)+":"+str(self.port)
-        self.listen()
+        try:
+            self.s.bind((self.ip, self.port))
+            print "Listening on Port"+str(self.ip)+":"+str(self.port)
+            self.listen()
+        except socket.error,msg:
+            print "Error::"+str(msg)
 
     def listen(self):
-        UDP_IP = self.ip
-        UDP_PORT = self.port
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-        sock.bind((UDP_IP, UDP_PORT))
         while True:
-            data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
-            print "received message:", data
+                data, addr = self.s.recvfrom(1024) # buffer size is 1024 bytes
+                print "received message:", data
+    
+    def close(self):
+        print "Interrupt Received"
+        self.s.close()
         
