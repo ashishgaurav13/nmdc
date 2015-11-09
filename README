@@ -4,13 +4,12 @@ NMDC is Neo Modus' Direct Connect Protocol. Full protocol at http://nmdc.sourcef
 
 Usage
 -----
-Create a python file like
 
 +------------------------------------------+
 |                                          |
-|  from PlainTalk import *                 |
-|  pt = PlainTalk(HUB, USERNAME, PASSWORD) |
-|  pt.talk()                               |
+|  $python2 test.py                        |
+|  Ctrl^C to EXIT                          |
+|                                          |
 |                                          |
 +------------------------------------------+
    
