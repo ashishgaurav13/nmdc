@@ -42,6 +42,11 @@ def formatCommand(cmd):
         return cmd
     return ret
     
+    
+def formatSearchResult(sr):
+    """ Format a search result so that it's correctly picked up by formatAndShowBuff """
+    return sr.replace(chr(5), '$$')    
+    
 def formatAndShowBuff(buff, unformatted = True, ignore = True):
     """ Format and Show a buffer, with the option to show unformatted messages and ignore info, quit and hello messages. """
     while '|' in buff:
@@ -55,6 +60,9 @@ def formatAndShowBuff(buff, unformatted = True, ignore = True):
             buff = buff[pipepos+1:]
         else:
             if pipepos-dollarpos+1 > 0 and not (('Quit' in buff[dollarpos+1:pipepos]) or ('Hello' in buff[dollarpos+1:pipepos]) or ('MyINFO' in buff[dollarpos+1:pipepos])):
-                print Fore.BLUE + formatCommand(buff[dollarpos+1:pipepos]).expandtabs(2) + Style.RESET_ALL
+                if 'SR' in buff[dollarpos+1:pipepos] and chr(5) in buff[dollarpos+1:pipepos]:
+                    print Fore.BLUE + formatCommand(formatSearchResult(buff[dollarpos+1:pipepos])).expandtabs(2) + Style.RESET_ALL
+                else:
+                    print Fore.BLUE + formatCommand(buff[dollarpos+1:pipepos]).expandtabs(2) + Style.RESET_ALL
             buff = buff[pipepos+1:]
     return buff
