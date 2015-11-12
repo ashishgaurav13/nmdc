@@ -36,6 +36,10 @@ class HubConnection(threading.Thread):
         self.udp = UDPConnection(udpip, udpport, self)
         self.udp.daemon = True
         self.udp.start()
+        # last set of search results
+        self.search = ''
+        self.searchResults = list()
+        self.searchMutex = threading.Lock()
 
     def run(self):
         """
@@ -88,8 +92,16 @@ class HubConnection(threading.Thread):
         if len(msgs) > 0 and msgs[0] in FUNCTIONS:
             resp = FUNCTIONS[msgs[0]](*(tuple(msgs[1:])))
             if resp: self.s.send(resp)
+            # if a search, clear search results, they're going to be repopulated !!
+            if 'Search' in msgs[0]:
+                self.search = msgs[3].strip()
+                self.searchMutex.acquire()
+                self.searchResults = list()
+                self.searchMutex.release()
         elif len(msgs) > 0 and msgs[0] == 'Show':
             self.show()
+        elif len(msgs) > 0 and msgs[0] == 'ShowSearchResults':
+            self.showSearchResults()
         else:
             self.s.send('$'+msg+'|')
         if log:
@@ -130,6 +142,11 @@ class HubConnection(threading.Thread):
     def show(self):
         """ Show previous commands and messages. """
         self.mutex.acquire()
-        self.buff = Utility.formatAndShowBuff(self.buff)
+        self.buff = Utility.formatAndShowBuff(self)
         self.mutex.release()
 
+    def showSearchResults(self):
+        self.searchMutex.acquire()
+        for result in self.searchResults:
+            print result['filename']+' ('+result['size']+') '+result['nick']
+        self.searchMutex.release()

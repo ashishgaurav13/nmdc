@@ -19,7 +19,6 @@ class UDPConnection(threading.Thread):
         """
         try:
             self.s.bind((self.ip, self.port))
-            print "Listening on Port "+str(self.ip)+":"+str(self.port)
             self.listen()
         except socket.error,msg:
             print "Error:"+str(msg)

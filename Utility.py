@@ -47,8 +47,9 @@ def formatSearchResult(sr):
     """ Format a search result so that it's correctly picked up by formatAndShowBuff """
     return sr.replace(chr(5), '$$')    
     
-def formatAndShowBuff(buff, unformatted = True, ignore = True):
+def formatAndShowBuff(hubConnection, unformatted = True, ignore = True):
     """ Format and Show a buffer, with the option to show unformatted messages and ignore info, quit and hello messages. """
+    buff = hubConnection.buff
     while '|' in buff:
         dollarpos = buff.find('$')
         pipepos = buff.find('|')
@@ -61,6 +62,29 @@ def formatAndShowBuff(buff, unformatted = True, ignore = True):
         else:
             if pipepos-dollarpos+1 > 0 and not (('Quit' in buff[dollarpos+1:pipepos]) or ('Hello' in buff[dollarpos+1:pipepos]) or ('MyINFO' in buff[dollarpos+1:pipepos])):
                 if 'SR' in buff[dollarpos+1:pipepos] and chr(5) in buff[dollarpos+1:pipepos]:
+                    try:
+                        # It's a search result
+                        sr = formatSearchResult(buff[dollarpos+1:pipepos]).split('$$')
+                        srdict = dict()
+                        # find first space and remove $SR
+                        sr[0] = sr[0][sr[0].find(' ')+1:]
+                        srdict['nick'] = sr[0][:sr[0].find(' ')].strip()
+                        # remove nick now
+                        sr[0] = sr[0][sr[0].find(' ')+1:]
+                        srdict['filename'] = sr[0].strip()
+                        # in sr[1], the format is filesize<space>slots
+                        sr[1] = sr[1].split()
+                        srdict['size'] = sr[1][0]
+                        srdict['slots'] = sr[1][1]
+                        # TODO : More info in sr[2], get it when needed
+                        # size is a number
+                        x = int(srdict['size'])
+                    except:
+                        pass
+                    else:
+                        hubConnection.searchMutex.acquire()
+                        hubConnection.searchResults.append(srdict)
+                        hubConnection.searchMutex.release()
                     print Fore.BLUE + formatCommand(formatSearchResult(buff[dollarpos+1:pipepos])).expandtabs(2) + Style.RESET_ALL
                 else:
                     print Fore.BLUE + formatCommand(buff[dollarpos+1:pipepos]).expandtabs(2) + Style.RESET_ALL
