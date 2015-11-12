@@ -1,6 +1,18 @@
-import socket, re, threading
-from constants import *
-from utility import *
+import socket, select, re, threading
+from Constants import *
+from CommandEncoder import *
+
+hasColor = False
+# import colorama if it exists
+try: 
+    import colorama
+except: 
+    pass
+else: 
+    from colorama import Fore, Style 
+    colorama.init()
+    hasColor = True
+
 
 class HubConnection(threading.Thread):
 
@@ -15,42 +27,44 @@ class HubConnection(threading.Thread):
         self.s.settimeout(2.0)
         self.username = username
         self.password = password
+        # The buffer which holds all commands we receive.
+        self.buff = ""
+        # Mutex lock for the buffer
+        self.mutex = threading.Lock()
 
     def run(self):
         """
         The main function to run when this thread is started.
         """
-        print "Starting DC SERVER TCP Port"
+        print (Fore.YELLOW if hasColor else "") + "Starting DC SERVER TCP Port" + (Style.RESET_ALL if hasColor else "")
         self.talk()
-        print "Exiting TCP"
+        print (Fore.YELLOW if hasColor else "") + "Exiting TCP" + (Style.RESET_ALL if hasColor else "")
 
     def auth(self):
         """
         Authorise the HubConnection by sending password.
         """
         # first get the lock
-        i = nbrecv(self.s)
+        i = self.nbrecv(log = True)
         j = i[0].split("|")
-        m  = re.match('\$\w+',j[0])
-        if m: 
-          print m.group(0)
         lock = i[0].split()[1]
         # send key and validate request
-        send(self.s, '$Supports UserCommand UserIP2|')
-        send(self.s, '$Key '+key(lock)+'|')
-        send(self.s, '$ValidateNick '+self.username+'|')
+        self.send('Supports UserCommand UserIP2', log = True)
+        self.send('Key '+lock, log = True)
+        self.send('ValidateNick '+self.username, log = True)
         # get the GetPass request (TODO:add an assert here)
-        nbrecv(self.s)
+        self.nbrecv(log = True)
         # send the password
-        send(self.s, '$MyPass '+self.password+'|')
+        self.send('MyPass '+self.password)
+        print "MyPass ***"
         # get Hello
-        nbrecv(self.s)
+        self.nbrecv(log = True)
         # send some info about yourself
-        send(self.s, '$Version 1,0091|')
-        send(self.s, '$GetNickList|')
-        send(self.s, '$MyINFO $ALL '+self.username+' $$$$$|')
+        self.send('Version 1,0091', log = True)
+        self.send('GetNickList', log = True)
+        self.send('MyINFO '+self.username, log = True)
         # get other stuff
-        nbrecv(self.s)
+        self.nbrecv(log = True)
 
     def talk(self):
         """
@@ -59,5 +73,58 @@ class HubConnection(threading.Thread):
         """
         self.auth()
         while True:
-          isend(self.s)
-          nbrecv(self.s)
+            self.isend()
+            self.nbrecv()
+
+    def send(self, msg, log = False):
+        """ Send a message using socket s, and log it. """
+        if len(msg) <= 0: return
+        msgs = [i for i in msg.split() if len(i) > 0]
+        if len(msgs) > 0 and msgs[0] in FUNCTIONS:
+            resp = FUNCTIONS[msgs[0]](*(tuple(msgs[1:])))
+            if resp: self.s.send(resp)
+        elif len(msgs) > 0 and msgs[0] == 'Show':
+            self.show()
+        else:
+            self.s.send('$'+msg+'|')
+        if log:
+            print (Fore.GREEN if hasColor else SENT) + msg + (Style.RESET_ALL if hasColor else "")
+
+    def isend(self):
+        """ interactive send """
+        msg = raw_input(SENT).strip()
+        self.send(msg)
+
+    def recv(self, log = False):
+        """ Receive a message from socket s, and log it. """
+        msg = self.s.recv(BUFLEN)
+        self.mutex.acquire()
+        self.buff += msg
+        self.mutex.release()
+        if log:
+            self.show()
+        return msg
+
+    def nbrecv(self, log = False):
+        """ Non Blocking Receive """
+        ret = []
+        while True:
+            try:
+                msg = self.s.recv(BUFLEN)
+                if len(msg) <= 0: raise Exception
+                self.mutex.acquire()
+                self.buff += msg
+                self.mutex.release()
+                ret.append(msg)
+            except:
+                break
+        if log:
+            self.show()
+        return ret
+        
+    def show(self):
+        """ Show previous commands and messages. """
+        self.mutex.acquire()
+        self.buff = Utility.formatAndShowBuff(self.buff)
+        self.mutex.release()
+

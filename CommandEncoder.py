@@ -1,3 +1,17 @@
+import Utility
+
+hasColor = False
+# import colorama if it exists
+try: 
+    import colorama
+except: 
+    pass
+else:
+    from colorama import Fore, Style 
+    colorama.init()
+    hasColor = True
+
+
 """ All the functions """
 FUNCTIONS = dict()
 
@@ -53,7 +67,7 @@ def logedIn(nick):
     """ LogedIn <nick> ; not a typo !! """
     return "$LogenIn %s|" % (nick)
 
-FUNCTIONS['LogedIn'] = LogedIn
+FUNCTIONS['LogedIn'] = logedIn
 
 def get(filename, offset):
     """ Get <file> <offset> """
@@ -149,13 +163,13 @@ FUNCTIONS['Search'] = search
 
 def myINFO(nick, description = '', connection = '', flag = '', mail = '', sharesize = '0'):
     """ MyINFO <nick> <description> <connection> <flag> <mail> <sharesize> """
-    return "$MyInfo $All %s %s $$%s%s$%s$%s$|" % (nick, description, connection, flag, mail, sharesize)
+    return "$MyINFO $ALL %s %s $$%s%s$%s$%s$|" % (nick, description, connection, flag, mail, sharesize)
 
 FUNCTIONS['MyINFO'] = myINFO
 
 def getINFO(othernick, nick):
     """ GetINFO <othernick> <nick> """
-    return "$GetInfo %s %s|" % (othernick, nick)
+    return "$GetINFO %s %s|" % (othernick, nick)
 
 FUNCTIONS['GetINFO'] = getINFO
 
@@ -232,9 +246,9 @@ def lock(lock, pk):
 
 FUNCTIONS['Lock'] = lock
 
-def key(key):
-    """ Key <key> """
-    return "$Key %s|" % (key)
+def key(lock):
+    """ Key <lock> """
+    return "$Key %s|" % (Utility.key(lock))
 
 FUNCTIONS['Key'] = key
 
@@ -261,15 +275,15 @@ FUNCTIONS['Supports'] = supports
 def command(commandname):
     """ Command <commandname> """
     if commandname in FUNCTIONS:
-        print FUNCTIONS[commandname].__doc__
+        print (Fore.YELLOW if hasColor else "") + FUNCTIONS[commandname].__doc__ + (Style.RESET_ALL if hasColor else "")
     else:
-        print "Not found."
+        print (Fore.YELLOW if hasColor else "") + "Not found." + (Style.RESET_ALL if hasColor else "")
 
 FUNCTIONS['Command'] = command
 
 def showCommands():
     """ ShowCommands """
     for key in FUNCTIONS:
-        print FUNCTIONS[key].__doc__
+        command(key)
 
 FUNCTIONS['ShowCommands'] = showCommands
