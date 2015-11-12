@@ -275,7 +275,7 @@ FUNCTIONS['Supports'] = supports
 def command(commandname):
     """ Command <commandname> """
     if commandname in FUNCTIONS:
-        print (Fore.YELLOW if hasColor else "") + FUNCTIONS[commandname].__doc__ + (Style.RESET_ALL if hasColor else "")
+        print (Fore.YELLOW if hasColor else "") + FUNCTIONS[commandname].__doc__.strip() + (Style.RESET_ALL if hasColor else "")
     else:
         print (Fore.YELLOW if hasColor else "") + "Not found." + (Style.RESET_ALL if hasColor else "")
 

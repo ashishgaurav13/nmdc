@@ -2,7 +2,7 @@ import threading, socket
 
 class UDPConnection(threading.Thread):
 
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, hubConnection):
         """
         Initialise thread, and start a datagram (UDP) socket.
         """
@@ -10,7 +10,8 @@ class UDPConnection(threading.Thread):
         self.ip = ip
         self.port = port
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-
+        self.hc = hubConnection
+        
     def run(self):
         """
         Bind to specified ip and port, and listen for a connection
@@ -27,8 +28,10 @@ class UDPConnection(threading.Thread):
         Show the data received.
         """
         while True:
-                data, addr = self.s.recvfrom(1024) # buffer size is 1024 bytes
-                print "U: ", data
+            data, addr = self.s.recvfrom(1024) # buffer size is 1024 bytes
+            self.hc.mutex.acquire() 
+            self.hc.buff += data
+            self.hc.mutex.release()
     
     def close(self):
         """

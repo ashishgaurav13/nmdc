@@ -20,27 +20,41 @@ def key(lock):
     for i in range(1, size): x += chr(ord(lock[i])^ord(lock[i-1]))
     for i in range(size): x = x[:i]+chr(((ord(x[i])<<4)&240)|((ord(x[i])>>4)&15))+x[i+1:]
     x = x.replace(chr(0),   '/%DCN000%/')\
-       .replace(chr(5),   '/%DCN005%/')\
-       .replace(chr(36),  '/%DCN036%/')\
-       .replace(chr(96),  '/%DCN096%/')\
-       .replace(chr(124), '/%DCN124%/')\
-       .replace(chr(126), '/%DCN126%/')
+         .replace(chr(5),   '/%DCN005%/')\
+         .replace(chr(36),  '/%DCN036%/')\
+         .replace(chr(96),  '/%DCN096%/')\
+         .replace(chr(124), '/%DCN124%/')\
+         .replace(chr(126), '/%DCN126%/')
     return x
+
+def formatCommand(cmd):
+    """ Format Commands even more """
+    ret = ''
+    if len(cmd) > 0 and ' ' in cmd:
+        ret += cmd[:cmd.find(' ')]
+        cmd = cmd[cmd.find(' '):].strip()
+        if '$$' in cmd:
+            params = cmd.split('$$')
+        else:
+            params = cmd.split()
+        ret += '\n\t'+'\n\t'.join(params)
+    else:
+        return cmd
+    return ret
     
-def formatAndShowBuff(buff, unformatted = True):
-    """ Format and Show a buffer, with the option to show unformatted messages. """
+def formatAndShowBuff(buff, unformatted = True, ignore = True):
+    """ Format and Show a buffer, with the option to show unformatted messages and ignore info, quit and hello messages. """
     while '|' in buff:
         dollarpos = buff.find('$')
         pipepos = buff.find('|')
         if pipepos == -1 or dollarpos == -1: 
             return
-        if pipepos > dollarpos:
-            if unformatted:
-                print "<Unformatted>"
-                print Fore.BLUE + buff[:pipepos] + Style.RESET_ALL
+        if pipepos < dollarpos:
+            if unformatted and not (('Quit' in buff[:pipepos]) or ('Hello' in buff[:pipepos]) or ('MyINFO' in buff[:pipepos])):
+                print Fore.RED + buff[:pipepos] + Style.RESET_ALL
             buff = buff[pipepos+1:]
         else:
-            if pipepos-dollarpos+1 > 0:
-                print Fore.BLUE + buff[dollarpos+1:pipepos] + Style.RESET_ALL
+            if pipepos-dollarpos+1 > 0 and not (('Quit' in buff[dollarpos+1:pipepos]) or ('Hello' in buff[dollarpos+1:pipepos]) or ('MyINFO' in buff[dollarpos+1:pipepos])):
+                print Fore.BLUE + formatCommand(buff[dollarpos+1:pipepos]).expandtabs(2) + Style.RESET_ALL
             buff = buff[pipepos+1:]
     return buff

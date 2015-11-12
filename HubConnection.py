@@ -1,6 +1,7 @@
 import socket, select, re, threading
 from Constants import *
 from CommandEncoder import *
+from UDPConnection import *
 
 hasColor = False
 # import colorama if it exists
@@ -16,7 +17,7 @@ else:
 
 class HubConnection(threading.Thread):
 
-    def __init__(self, hub, port, username, password):
+    def __init__(self, hub, port, username, password, udpip = '192.168.158.191', udpport = 5005):
         """
         Initialise thread, and create a TCP socket which connects to hub:port
         with specified username and password.
@@ -24,13 +25,17 @@ class HubConnection(threading.Thread):
         threading.Thread.__init__(self)
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((hub, port))
-        self.s.settimeout(2.0)
+        self.s.settimeout(1.5)
         self.username = username
         self.password = password
         # The buffer which holds all commands we receive.
         self.buff = ""
         # Mutex lock for the buffer
         self.mutex = threading.Lock()
+        # UDP socket for active searches
+        self.udp = UDPConnection(udpip, udpport, self)
+        self.udp.daemon = True
+        self.udp.start()
 
     def run(self):
         """
@@ -92,7 +97,7 @@ class HubConnection(threading.Thread):
 
     def isend(self):
         """ interactive send """
-        msg = raw_input(SENT).strip()
+        msg = raw_input("" if hasColor else SENT).strip()
         self.send(msg)
 
     def recv(self, log = False):
