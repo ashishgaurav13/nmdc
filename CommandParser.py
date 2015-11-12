@@ -249,3 +249,27 @@ def multiSearch(ip, port, searchstring):
     return "$MultiSearch %s:%s %s|" % (ip, port, searchstring)
 
 FUNCTIONS['MultiSearch'] = multiSearch
+
+def supports(*whatever):
+    """ Supports <arg1> <arg2> ... """
+    return "$Supports "+(' '.join(whatever))+"|"
+
+FUNCTIONS['Supports'] = supports
+
+#  Help functions
+
+def command(commandname):
+    """ Command <commandname> """
+    if commandname in FUNCTIONS:
+        print FUNCTIONS[commandname].__doc__
+    else:
+        print "Not found."
+
+FUNCTIONS['Command'] = command
+
+def showCommands():
+    """ ShowCommands """
+    for key in FUNCTIONS:
+        print FUNCTIONS[key].__doc__
+
+FUNCTIONS['ShowCommands'] = showCommands
