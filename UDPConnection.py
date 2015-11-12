@@ -1,3 +1,5 @@
+import threading, socket
+
 class UDPConnection(threading.Thread):
 
     def __init__(self, ip, port):
@@ -15,10 +17,10 @@ class UDPConnection(threading.Thread):
         """
         try:
             self.s.bind((self.ip, self.port))
-            print "Listening on Port"+str(self.ip)+":"+str(self.port)
+            print "Listening on Port "+str(self.ip)+":"+str(self.port)
             self.listen()
         except socket.error,msg:
-            print "Error::"+str(msg)
+            print "Error:"+str(msg)
 
     def listen(self):
         """
@@ -26,7 +28,7 @@ class UDPConnection(threading.Thread):
         """
         while True:
                 data, addr = self.s.recvfrom(1024) # buffer size is 1024 bytes
-                print "received message:", data
+                print "U: ", data
     
     def close(self):
         """

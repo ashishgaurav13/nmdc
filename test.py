@@ -1,4 +1,5 @@
-from HubConnection, UDPConnection import *
+from HubConnection import *
+from UDPConnection import *
 import time
 
 def main():

@@ -1,8 +1,6 @@
-import socket
+import socket, re, threading
 from constants import *
 from utility import *
-import re
-import threading
 
 class HubConnection(threading.Thread):
 
