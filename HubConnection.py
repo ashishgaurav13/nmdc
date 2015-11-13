@@ -2,6 +2,7 @@ import socket, select, re, threading
 from Constants import *
 from CommandEncoder import *
 from UDPConnection import *
+from ClientConnection import *
 
 hasColor = False
 # import colorama if it exists
@@ -82,14 +83,27 @@ class HubConnection(threading.Thread):
         """
         self.auth()
         while True:
-            self.isend()
-            self.nbrecv()
+            try:
+                self.isend()
+                self.nbrecv()
+            except KeyboardInterrupt:
+                print "Coming out..."
+                break
+            except:
+                print "Something went wrong"
+            else:
+                pass
 
     def send(self, msg, log = False):
         """ Send a message using socket s, and log it. """
         if len(msg) <= 0: return
         msgs = [i for i in msg.split() if len(i) > 0]
-        if len(msgs) > 0 and msgs[0] in FUNCTIONS:
+        if len(msgs) > 0 and msgs[0] == 'ConnectToMe':
+            cc = ClientConnection(self.username, msgs[2], -1, True)
+            cc.start()
+            self.s.send(FUNCTIONS[msgs[0]](*((msgs[1], msgs[2], cc.port))))
+            cc.join()
+        elif len(msgs) > 0 and msgs[0] in FUNCTIONS:
             resp = FUNCTIONS[msgs[0]](*(tuple(msgs[1:])))
             if resp: self.s.send(resp)
             # if a search, clear search results, they're going to be repopulated !!
@@ -102,6 +116,11 @@ class HubConnection(threading.Thread):
             self.show()
         elif len(msgs) > 0 and msgs[0] == 'ShowSearchResults':
             self.showSearchResults()
+        elif len(msgs) > 0 and msgs[0] == 'ClientConnection':
+            # This is the part where the main loop halts and we enter a client connection loop (passive)
+            cc = ClientConnection(self.username, msgs[1], int(msgs[2]))
+            cc.start()
+            cc.join()
         else:
             self.s.send('$'+msg+'|')
         if log:
