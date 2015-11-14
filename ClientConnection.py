@@ -1,4 +1,4 @@
-import socket, select, re, threading, random
+import socket, select, re, threading, random, zlib, bz2
 from Constants import *
 from CommandEncoder import *
 
@@ -81,8 +81,28 @@ class ClientConnection(threading.Thread):
             self.send("Supports MiniSlots XmlBZList ADCGet TTHL TTHF ZLIG", log = True)
             self.send("Direction Download 50000", log = True)
             self.send(r[2]+'IGNORE' if 'Key' in r[2] else "Key "+lock)
-            print "All should be set up !!!"
             
+        
+    def downloadFile(self, filename):
+        """
+        Once connected, download the file and save it as filename.
+        """
+        filetype = "tthl" if "TTH/" in filename else "file"
+        self.send("ADCGET "+filetype+" "+filename+" 0 -1 ZL1")
+        st = ''
+        try:
+            st += ''.join(self.nbrecv(log = False))
+            self.mutex.acquire()
+            self.buff = ''
+            self.mutex.release() 
+        except:
+            pass
+        st = st[st.find('|')+1:]
+        print len(st)
+        f = open(filename.replace('TTH/', ''), 'w')
+        f.write(st)
+        f.close()
+        print (Fore.YELLOW if hasColor else "") + "File (compressed)" + filename + " was downloaded. Check the folder!" + (Style.RESET_ALL if hasColor else "")
         
     def talk(self):
         """
@@ -103,6 +123,8 @@ class ClientConnection(threading.Thread):
         elif len(msgs) > 0 and msgs[0] in FUNCTIONS:
             resp = FUNCTIONS[msgs[0]](*(tuple(msgs[1:])))
             if resp: self.s.send(resp)
+        elif len(msgs) > 0 and msgs[0] == 'Download':
+            self.downloadFile(''.join(msgs[1:]))
         elif len(msgs) > 0 and msgs[0] == 'Show':
             self.show()
         elif len(msgs) > 0 and msgs[0] == 'Exit':
