@@ -52,15 +52,15 @@ class ClientConnection(threading.Thread):
         """
         The main function to run when this thread is started.
         """
-        print (Fore.YELLOW if hasColor else "") + "Entering Client Communication Mode" + (Style.RESET_ALL if hasColor else "")
+        print ("" if not hasColor else Fore.YELLOW) + "Entering Client Communication Mode" + ("" if not hasColor else Style.RESET_ALL)
         if self.listen:
             # wait for something to connect
             self.conn, self.clientAddress = self.s.accept()
-            print (Fore.YELLOW if hasColor else "") + "Connected to " + str(self.clientAddress) + (Style.RESET_ALL if hasColor else "") 
+            print ("" if not hasColor else Fore.YELLOW) + "Connected to " + str(self.clientAddress) + ("" if not hasColor else Style.RESET_ALL) 
             self.conn, self.s = self.s, self.conn
             self.s.settimeout(1.5)
-        self.talk()
-        print (Fore.YELLOW if hasColor else "") + "Exiting Client Communication Mode" + (Style.RESET_ALL if hasColor else "")
+        self.talk()n
+        print ("" if not hasColor else Fore.YELLOW) + "Exiting Client Communication Mode" + ("" if not hasColor else Style.RESET_ALL)
 
     def auth(self):
         """
@@ -102,7 +102,7 @@ class ClientConnection(threading.Thread):
         f = open(filename.replace('TTH/', ''), 'w')
         f.write(st)
         f.close()
-        print (Fore.YELLOW if hasColor else "") + "File (compressed)" + filename + " was downloaded. Check the folder!" + (Style.RESET_ALL if hasColor else "")
+        print ("" if not hasColor else Fore.YELLOW) + "File (compressed)" + filename + " was downloaded. Check the folder!" + ("" if not hasColor else Style.RESET_ALL)
         
     def talk(self):
         """
@@ -132,11 +132,11 @@ class ClientConnection(threading.Thread):
         else:
             self.s.send('$'+msg+'|')
         if log:
-            print (Fore.GREEN if hasColor else SENT) + msg.replace('IGNORE', '') + (Style.RESET_ALL if hasColor else "")
+            print (SENT if not hasColor else Fore.GREEN) + msg.replace('IGNORE', '') + ("" if not hasColor else Style.RESET_ALL)
 
     def isend(self):
         """ interactive send """
-        msg = raw_input("" if hasColor else SENT).strip()
+        msg = raw_input(SENT if not hasColor else "").strip()
         self.send(msg)
 
     def recv(self, log = False):

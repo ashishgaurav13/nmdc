@@ -46,9 +46,9 @@ class HubConnection(threading.Thread):
         """
         The main function to run when this thread is started.
         """
-        print (Fore.YELLOW if hasColor else "") + "Starting DC SERVER TCP Port" + (Style.RESET_ALL if hasColor else "")
+        print ("" if not hasColor else Fore.YELLOW) + "Starting DC SERVER TCP Port" + ("" if not hasColor else Style.RESET_ALL)
         self.talk()
-        print (Fore.YELLOW if hasColor else "") + "Exiting TCP" + (Style.RESET_ALL if hasColor else "")
+        print ("" if not hasColor else Fore.YELLOW) + "Exiting TCP" + ("" if not hasColor else Style.RESET_ALL)
 
     def auth(self):
         """
@@ -124,11 +124,11 @@ class HubConnection(threading.Thread):
         else:
             self.s.send('$'+msg+'|')
         if log:
-            print (Fore.GREEN if hasColor else SENT) + msg + (Style.RESET_ALL if hasColor else "")
+            print (SENT if not hasColor else Fore.GREEN) + msg + ("" if not hasColor else Style.RESET_ALL)
 
     def isend(self):
         """ interactive send """
-        msg = raw_input("" if hasColor else SENT).strip()
+        msg = raw_input(SENT if not hasColor else "").strip()
         self.send(msg)
 
     def recv(self, log = False):
