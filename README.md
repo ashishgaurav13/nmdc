@@ -66,10 +66,20 @@ to do this. One more trick, files.xml.bz2 after zlib decompression, also need to
 ```
 bzip2 -d <last-file>
 ```
+
+To see the format of commands you can use, do
+
+```
+ShowCommands
+Command <single-command>
+Command RevConnectToMe
+...
+```
+
 Enjoy NMDC ! More to come.
    
 
 To do
 -----
-(1) Create a daemon that can connect to DC Hubs. This is an intermediary.
-(2) Create a client downloader program, that uses the daemon, searches stuff and downloads based on the IDs (each search result is assigned an ID).
+1. Create a daemon that can connect to DC Hubs. This is an intermediary.
+2. Create a client downloader program, that uses the daemon, searches stuff and downloads based on the IDs (each search result is assigned an ID).
