@@ -1,4 +1,4 @@
-import socket, select, re, threading, random, zlib, bz2
+import socket, select, re, threading, random, zlib, bz2, sys
 from Constants import *
 from CommandEncoder import *
 
@@ -17,13 +17,14 @@ else:
 class ClientConnection(threading.Thread):
     """ We don't need a TCP Server Socket, that must be provided, we're the client downloading side. """
 
-    def __init__(self, nick, ip, port, listen = False):
+    def __init__(self, nick, ip, port, listen = False, details = None):
         """
         Initialise thread, and create a TCP socket which connects to ip:port which you would
         have when you did the RevConnectToMe thing.
         """
         threading.Thread.__init__(self)
         self.listen = listen
+        self.details = details
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if listen:
             while True:
@@ -90,12 +91,12 @@ class ClientConnection(threading.Thread):
         """
         filetype = "file"
         if filename == 'files.xml.bz2': size = 1
-        print 'size = '+str(size)
+        sys.stdout.write('Downloading 0/'+Utility.toMB(str(size))+' MB')
         got = 0
         # max speed 8 Mbps (ram problems, significant delay otherwise)
         chunksize = min(8*1024*1024, size)
         while got < size:
-            self.send("ADCGET "+filetype+" "+filename+" "+str(got)+" "+(str(chunksize) if size-got > chunksize else "-1")+" ZL1", log = True)
+            self.send("ADCGET "+filetype+" "+filename+" "+str(got)+" "+(str(chunksize) if size-got > chunksize else "-1")+" ZL1")
             st = ''
             try:
                 st += ''.join(self.nbrecv(log = False))
@@ -122,7 +123,8 @@ class ClientConnection(threading.Thread):
                 f.write(st2)
                 got += len(st2)
             f.close()
-            print "got = "+str(got)
+            sys.stdout.write('\rDownloading '+Utility.toMB(str(got))+'/'+Utility.toMB(str(size))+' MB')
+        sys.stdout.write('\rDownloaded around '+Utility.toMB(str(size))+' MB\n')
         print ("" if not hasColor else Fore.YELLOW) + "File (compressed)" + filename + " was downloaded. Check the folder!" + ("" if not hasColor else Style.RESET_ALL)
         
     def talk(self):
@@ -131,10 +133,13 @@ class ClientConnection(threading.Thread):
         a send receive loop.
         """
         self.auth()
-        while self.isActive:
-            self.isend()
-            self.nbrecv()
-
+        if self.details is None:
+            while self.isActive:
+                self.isend()
+                self.nbrecv()
+        else:
+            self.send('Download '+self.details['tth']+' '+self.details['size']+' '+self.details['filename'].replace(' ','-')+' 1')
+    
     def send(self, msg, log = False):
         """ Send a message using socket s, and log it. """
         if len(msg) <= 0: return

@@ -29,6 +29,8 @@ class HubConnection(threading.Thread):
         self.s.settimeout(1.5)
         self.username = username
         self.password = password
+        self.ip = udpip
+        self.udpport = 5005
         # The buffer which holds all commands we receive.
         self.buff = ""
         # Mutex lock for the buffer
@@ -39,7 +41,7 @@ class HubConnection(threading.Thread):
         self.udp.start()
         # last set of search results
         self.search = ''
-        self.searchResults = list()
+        self.searchResults = dict()
         self.searchMutex = threading.Lock()
 
     def run(self):
@@ -98,6 +100,18 @@ class HubConnection(threading.Thread):
         """ Send a message using socket s, and log it. """
         if len(msg) <= 0: return
         msgs = [i for i in msg.split() if len(i) > 0]
+        if len(msgs) > 0 and msgs[0] == 'Find':
+            self.send('Search '+self.ip+' '+str(self.udpport)+' F?T?0?1?'+'$'.join(msgs[1:]))
+        if len(msgs) > 0 and msgs[0] == 'DownloadById':
+            num = int(msgs[1])
+            self.searchMutex.acquire()
+            cc = ClientConnection(self.username, self.ip, -1, True, dict(self.searchResults[num]))
+            self.searchMutex.release()
+            cc.start()
+            self.searchMutex.acquire()
+            self.s.send(FUNCTIONS['ConnectToMe'](*((self.searchResults[num]['nick'], self.ip, cc.port))))
+            self.searchMutex.release()
+            cc.join() 
         if len(msgs) > 0 and msgs[0] == 'ConnectToMe':
             cc = ClientConnection(self.username, msgs[2], -1, True)
             cc.start()
@@ -110,7 +124,7 @@ class HubConnection(threading.Thread):
             if 'Search' in msgs[0]:
                 self.search = msgs[3].strip()
                 self.searchMutex.acquire()
-                self.searchResults = list()
+                self.searchResults = dict()
                 self.searchMutex.release()
         elif len(msgs) > 0 and msgs[0] == 'Show':
             self.show()
@@ -166,6 +180,6 @@ class HubConnection(threading.Thread):
 
     def showSearchResults(self):
         self.searchMutex.acquire()
-        for result in self.searchResults:
-            print result['filename']+' ('+result['size']+') '+result['nick']
+        for key in self.searchResults:
+            print str(key)+': '+' ( around '+Utility.toMB(self.searchResults[key]['size'])+' MB - '+self.searchResults[key]['nick']+')\n'+self.searchResults[key]['filename']
         self.searchMutex.release()

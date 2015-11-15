@@ -12,6 +12,8 @@ else:
     colorama.init()
     hasColor = True
 
+def toMB(st):
+    return str(int(st)/(1024*1024))
 
 def key(lock):
     """ Create the key for a given lock """
@@ -70,20 +72,24 @@ def formatAndShowBuff(hubConnection, unformatted = True, ignore = True):
                         sr[0] = sr[0][sr[0].find(' ')+1:]
                         srdict['nick'] = sr[0][:sr[0].find(' ')].strip()
                         # remove nick now
-                        sr[0] = sr[0][sr[0].find(' ')+1:]
-                        srdict['filename'] = sr[0].strip()
+                        sr[0] = sr[0][sr[0].find(' ')+1:].strip()
+                        sr[0] = sr[0].split('\\')[-1]
+                        srdict['filename'] = sr[0]
                         # in sr[1], the format is filesize<space>slots
                         sr[1] = sr[1].split()
                         srdict['size'] = sr[1][0]
                         srdict['slots'] = sr[1][1]
-                        # TODO : More info in sr[2], get it when needed
+                        # in sr[2], tth, hub ip (TODO)
+                        sr[2] = sr[2].split()
+                        srdict['tth'] = sr[2][0].replace(':', '/')
                         # size is a number
                         x = int(srdict['size'])
+                        
                     except:
                         pass
                     else:
                         hubConnection.searchMutex.acquire()
-                        hubConnection.searchResults.append(srdict)
+                        hubConnection.searchResults[len(hubConnection.searchResults)] = srdict
                         hubConnection.searchMutex.release()
                     print Fore.BLUE + formatCommand(formatSearchResult(buff[dollarpos+1:pipepos])).expandtabs(2) + Style.RESET_ALL
                 else:
