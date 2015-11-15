@@ -59,7 +59,7 @@ class ClientConnection(threading.Thread):
             print ("" if not hasColor else Fore.YELLOW) + "Connected to " + str(self.clientAddress) + ("" if not hasColor else Style.RESET_ALL) 
             self.conn, self.s = self.s, self.conn
             self.s.settimeout(1.5)
-        self.talk()n
+        self.talk()
         print ("" if not hasColor else Fore.YELLOW) + "Exiting Client Communication Mode" + ("" if not hasColor else Style.RESET_ALL)
 
     def auth(self):
@@ -83,25 +83,46 @@ class ClientConnection(threading.Thread):
             self.send(r[2]+'IGNORE' if 'Key' in r[2] else "Key "+lock)
             
         
-    def downloadFile(self, filename):
+    def downloadFile(self, filename, size, realname, uncompress = 0):
         """
         Once connected, download the file and save it as filename.
+        Uncompress options : 0 = do nothing, 1 = zlib, 2 = bz2, 3 = zlib then bz2
         """
-        filetype = "tthl" if "TTH/" in filename else "file"
-        self.send("ADCGET "+filetype+" "+filename+" 0 -1 ZL1")
-        st = ''
-        try:
-            st += ''.join(self.nbrecv(log = False))
-            self.mutex.acquire()
-            self.buff = ''
-            self.mutex.release() 
-        except:
-            pass
-        st = st[st.find('|')+1:]
-        print len(st)
-        f = open(filename.replace('TTH/', ''), 'w')
-        f.write(st)
-        f.close()
+        filetype = "file"
+        if filename == 'files.xml.bz2': size = 1
+        print 'size = '+str(size)
+        got = 0
+        # max speed 8 Mbps (ram problems, significant delay otherwise)
+        chunksize = min(8*1024*1024, size)
+        while got < size:
+            self.send("ADCGET "+filetype+" "+filename+" "+str(got)+" "+(str(chunksize) if size-got > chunksize else "-1")+" ZL1", log = True)
+            st = ''
+            try:
+                st += ''.join(self.nbrecv(log = False))
+                self.mutex.acquire()
+                self.buff = ''
+                self.mutex.release() 
+            except:
+                pass
+            st = st[st.find('|')+1:]
+            f = open(realname, 'a')
+            if uncompress == 0:
+                f.write(st)
+                got += len(st)
+            elif uncompress == 1:
+                st2 = zlib.decompress(st)
+                f.write(st2)
+                got += len(st2)
+            elif uncompress == 2:
+                st2 = bz2.decompress(st)
+                f.write(st2)
+                got += len(st2)
+            else:
+                st2 = bz2.decompress(zlib.decompress(st))
+                f.write(st2)
+                got += len(st2)
+            f.close()
+            print "got = "+str(got)
         print ("" if not hasColor else Fore.YELLOW) + "File (compressed)" + filename + " was downloaded. Check the folder!" + ("" if not hasColor else Style.RESET_ALL)
         
     def talk(self):
@@ -124,7 +145,8 @@ class ClientConnection(threading.Thread):
             resp = FUNCTIONS[msgs[0]](*(tuple(msgs[1:])))
             if resp: self.s.send(resp)
         elif len(msgs) > 0 and msgs[0] == 'Download':
-            self.downloadFile(''.join(msgs[1:]))
+            # Make this better?
+            self.downloadFile(''.join(msgs[1:-3]), int(msgs[-3]), msgs[-2], int(msgs[-1]))
         elif len(msgs) > 0 and msgs[0] == 'Show':
             self.show()
         elif len(msgs) > 0 and msgs[0] == 'Exit':
