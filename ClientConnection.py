@@ -13,6 +13,11 @@ else:
     colorama.init()
     hasColor = True
 
+# EXTRA
+EXTRA = dict()
+EXTRA['Download'] = 'Download <filename/tth> <filesize> <save-file-as> <mode>, <mode is 0 = uncompressed, 1 = zlib, 2 = bzip2, 3 = zlib then bzip2'
+EXTRA['Exit'] = 'Exit'
+
 
 class ClientConnection(threading.Thread):
     """ We don't need a TCP Server Socket, that must be provided, we're the client downloading side. """
@@ -144,7 +149,16 @@ class ClientConnection(threading.Thread):
         """ Send a message using socket s, and log it. """
         if len(msg) <= 0: return
         msgs = [i for i in msg.split() if len(i) > 0]
-        if 'IGNORE' in msg:
+        if len(msgs) > 0 and msgs[0] == 'ShowCommands':
+            self.send('ShowCommands')
+            for extra in EXTRA:
+                print (Fore.YELLOW if hasColor else "")+EXTRA[extra]+(Style.RESET_ALL if hasColor else "")
+        elif len(msgs) > 0 and msgs[0] == 'Command':
+            if msgs[1] in EXTRA:
+                print (Fore.YELLOW if hasColor else "")+EXTRA[msgs[1]]+(Style.RESET_ALL if hasColor else "")
+            else:
+                self.send('Command '+msgs[1])
+        elif 'IGNORE' in msg:
             self.s.send(msg.replace('IGNORE', ''))
         elif len(msgs) > 0 and msgs[0] in FUNCTIONS:
             resp = FUNCTIONS[msgs[0]](*(tuple(msgs[1:])))

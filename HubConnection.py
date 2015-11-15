@@ -15,6 +15,14 @@ else:
     colorama.init()
     hasColor = True
 
+# EXTRA
+EXTRA = dict()
+EXTRA['Find'] = 'Find <search terms>'
+EXTRA['Show'] = 'Show'
+EXTRA['ShowSearchResults'] = 'ShowSearchResults'
+EXTRA['DownloadById'] = 'DownloadById <id>'
+EXTRA['ClientConnection'] = 'ClientConnection <otherip> <otherport>'
+
 
 class HubConnection(threading.Thread):
 
@@ -100,9 +108,18 @@ class HubConnection(threading.Thread):
         """ Send a message using socket s, and log it. """
         if len(msg) <= 0: return
         msgs = [i for i in msg.split() if len(i) > 0]
-        if len(msgs) > 0 and msgs[0] == 'Find':
+        if len(msgs) > 0 and msgs[0] == 'ShowCommands':
+            self.send('ShowCommands')
+            for extra in EXTRA:
+                print (Fore.YELLOW if hasColor else "")+EXTRA[extra]+(Style.RESET_ALL if hasColor else "")
+        elif len(msgs) > 0 and msgs[0] == 'Command':
+            if msgs[1] in EXTRA:
+                print (Fore.YELLOW if hasColor else "")+EXTRA[msgs[1]]+(Style.RESET_ALL if hasColor else "")
+            else:
+                self.send('Command '+msgs[1])
+        elif len(msgs) > 0 and msgs[0] == 'Find':
             self.send('Search '+self.ip+' '+str(self.udpport)+' F?T?0?1?'+'$'.join(msgs[1:]))
-        if len(msgs) > 0 and msgs[0] == 'DownloadById':
+        elif len(msgs) > 0 and msgs[0] == 'DownloadById':
             num = int(msgs[1])
             self.searchMutex.acquire()
             cc = ClientConnection(self.username, self.ip, -1, True, dict(self.searchResults[num]))
@@ -112,7 +129,7 @@ class HubConnection(threading.Thread):
             self.s.send(FUNCTIONS['ConnectToMe'](*((self.searchResults[num]['nick'], self.ip, cc.port))))
             self.searchMutex.release()
             cc.join() 
-        if len(msgs) > 0 and msgs[0] == 'ConnectToMe':
+        elif len(msgs) > 0 and msgs[0] == 'ConnectToMe':
             cc = ClientConnection(self.username, msgs[2], -1, True)
             cc.start()
             self.s.send(FUNCTIONS[msgs[0]](*((msgs[1], msgs[2], cc.port))))

@@ -2,8 +2,33 @@ NMDCX
 ------
 NMDC is Neo Modus' Direct Connect Protocol. Full protocol at http://nmdc.sourceforge.net.
 
-Usage
------
+How to use
+----------
+Modify test.py to reflect your hub ip, and provide your own username, password, and an UDP port (for active searches).
+
+```
+hc = HubConnection("<hub-ip>", 411 , "<username>", "<password>", "<your-ip>", "<udp-port, optional>")
+```
+Then do
+```
+$ python2 test.py
+```
+After you get the Message of the day and connect notifications (and oplist should be last), a simple search can be done like
+```
+Find <search terms, spaces allowed>
+```
+See the search results by ID by doing
+```
+ShowSearchResults
+```
+Choose what you want to download (in your head !), and do
+```
+DownloadById <id>
+```
+The file should download. For files greater than 10 MB, it might take some time, but the status should be shown. Rest should be fast and easy. Wait until it says exiting client communication mode, and you should be good to go !
+
+Advanced Usage
+--------------
 To connect to a hub, modify test.py to reflect your own connection status (username, pass, hub ip ...)
 Then, in a terminal, do
 
@@ -45,28 +70,10 @@ ADCGET tthl <TTH/....> 0 -1 ZL1
 or even more simply
 
 ```
-Download <filename>
-Download <TTH/....>
+Download <tth> <filesize> <save-file-as> <mode>
 ```
 
-Note that this currently works for only small files. You can try doing 
-
-```
-Download files.xml.bz2
-```
-
-which every client will have. Files are compressed using zlib's LZ77 algorithm, and are not decompressed automatically (to do). Use 
-
-```
-(openssl -d <compressed>) > uncompressed 
-```
-
-to do this. One more trick, files.xml.bz2 after zlib decompression, also need to go through a bzip2 decompression, which can be done via
-
-```
-bzip2 -d <last-file>
-```
-
+<save-file-as> should not have spaces (for now). Mode can be 0 for uncompressed, 1 for zlib compressed (LZ77), 2 for bzip2, 3 for doing zlib decompression first, and then bzip2 (for filelists).
 To see the format of commands you can use, do
 
 ```
