@@ -83,9 +83,6 @@ Command RevConnectToMe
 ...
 ```
 
-Enjoy NMDC ! More to come.
-   
-
 To do
 -----
 1. Create a daemon that can connect to NMDC Hubs (eg VerliHub). This is an intermediary.
